@@ -13,7 +13,8 @@ Middleware corsHeaders() {
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Origin, Content-Type, Authorization',
+    'Access-Control-Allow-Headers': 'Origin, Content-Type, Authorization, Cookie',
+    'Access-Control-Allow-Credentials': 'true',
   };
 
   Response addCorsHeaders(Response response) =>
@@ -30,6 +31,7 @@ Middleware corsHeaders() {
     };
   };
 }
+
 
 void main() async {
   final router = Router();
@@ -83,19 +85,20 @@ void main() async {
     final user = await db.authenticateUser(email, password);
     if (user != null) {
       final session = await db.createSession(user.id);
-
+      //
       return Response.ok(jsonEncode({
         'message': 'Login successful',
         'userId': user.id,
-        'fullName': user.fullName
+        'fullName': user.fullName,
+        'sessionId': session?.sessionId,
       }), headers: {
         'Content-Type': 'application/json',
-        'Set-Cookie': 'sessionId=${session?.sessionId}; HttpOnly; Path=/; Max-Age=900', // Устанавливаем куки на 15 минут
       });
     } else {
       return Response.forbidden(jsonEncode({'error': 'Invalid email or password'}));
     }
   });
+
 
   router.post('/logout', (Request request) async {
     final sessionId = request.headers['cookie']?.split('; ').firstWhere(
@@ -323,14 +326,19 @@ void main() async {
     return Response.ok(jsonEncode({'message': 'Promotion added successfully'}));
   });
 
+  String? extractSessionId(Request request) {
+    final authHeader = request.headers['Authorization'];
+    if (authHeader != null && authHeader.startsWith('Bearer ')) {
+      return authHeader.substring(7); // Получаем токен после "Bearer "
+    }
+    return null;
+  }
+
   Middleware sessionChecker() {
     return (Handler handler) {
       return (Request request) async {
-        // Извлекаем sessionId из куков
-        final sessionId = request.headers['cookie']?.split('; ').firstWhere(
-              (cookie) => cookie.startsWith('sessionId='),
-              orElse: () => '',
-            )?.split('=')[1];
+        // Извлекаем sessionId из заголовка Authorization
+        final sessionId = extractSessionId(request);
 
         if (sessionId == null || sessionId.isEmpty) {
           return Response.forbidden(jsonEncode({'error': 'Not authorized'}));
@@ -368,9 +376,9 @@ void main() async {
   final handler = Pipeline()
       .addMiddleware(logRequests())
       .addMiddleware(corsHeaders())
-      .addHandler(Router()
-        ..mount('/', router) // Публичные маршруты
-        ..mount('/', protectedHandler)); // Защищённые маршруты с проверкой сессии
+      .addHandler((Router()
+      ..mount('/', router) // Публичные маршруты
+      ..mount('/', protectedHandler)).call); // Защищённые маршруты с проверкой сессии
 
   final server = await io.serve(handler, InternetAddress.anyIPv4, 8080);
   print('Server running on http://localhost:${server.port}');
