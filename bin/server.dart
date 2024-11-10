@@ -63,8 +63,16 @@ void main() async {
     }
 
     try {
-      final id = await db.registerUser(fullName, email, password);
-      return Response.ok(jsonEncode({'message': 'User registered', 'userId': id}));
+      final userId = await db.registerUser(fullName, email, password);
+      
+      // Создаем сессию сразу после регистрации
+      final session = await db.createSession(userId);
+
+      return Response.ok(jsonEncode({
+        'message': 'User registered and logged in',
+        'userId': userId,
+        'sessionId': session?.sessionId,
+      }));
     } catch (e) {
       return Response.internalServerError(body: jsonEncode({'error': 'Registration failed', 'details': e.toString()}));
     }
@@ -99,19 +107,27 @@ void main() async {
     }
   });
 
+  String? extractSessionId(Request request) {
+    final authHeader = request.headers['Authorization'];
+    if (authHeader != null && authHeader.startsWith('Bearer ')) {
+      return authHeader.substring(7);
+    }
+    return null;
+  }
+
 
   router.post('/logout', (Request request) async {
-    final sessionId = request.headers['cookie']?.split('; ').firstWhere(
-          (cookie) => cookie.startsWith('sessionId='),
-          orElse: () => '',
-        )?.split('=')[1];
+    final sessionId = extractSessionId(request);
 
-    if (sessionId != null && sessionId.isNotEmpty) {
-      await db.deleteSession(sessionId);
+    if (sessionId == null || sessionId.isEmpty) {
+      return Response.badRequest(body: jsonEncode({'error': 'Не найден идентификатор сессии в заголовке Authorization'}));
     }
 
-    return Response.ok(jsonEncode({'message': 'Logged out successfully'}), headers: {
-      'Set-Cookie': 'sessionId=; HttpOnly; Path=/; Max-Age=0', // Удаляем куки
+    // Удаление сессии из базы данных
+    await db.deleteSession(sessionId);
+
+    return Response.ok(jsonEncode({'message': 'Вы успешно вышли из системы'}), headers: {
+      'Authorization': 'Bearer ', // Очищаем заголовок Authorization, чтобы указать завершение сессии
     });
   });
 
@@ -129,6 +145,34 @@ void main() async {
       return Response.ok(jsonEncode(usersList), headers: {'Content-Type': 'application/json'});
     } catch (e) {
       return Response.internalServerError(body: 'Failed to retrieve users: $e');
+    }
+  });
+
+  protectedRouter.get('/user', (Request request) async {
+    try {
+      // Извлечение userId из Query Parameters
+      final userId = request.url.queryParameters['userId'];
+      final id = int.tryParse(userId ?? '');
+
+      if (id == null) {
+        return Response.badRequest(body: jsonEncode({'error': 'Invalid or missing user ID'}));
+      }
+
+      // Получаем пользователя из базы данных
+      final user = await db.getUserById(id);
+      if (user == null) {
+        return Response.notFound(jsonEncode({'error': 'User not found'}));
+      }
+
+      // Возвращаем информацию о пользователе
+      return Response.ok(jsonEncode({
+        'id': user.id,
+        'fullName': user.fullName,
+        'email': user.email,
+      }), headers: {'Content-Type': 'application/json'});
+
+    } catch (e) {
+      return Response.internalServerError(body: jsonEncode({'error': 'Failed to retrieve user data', 'details': e.toString()}));
     }
   });
 
@@ -325,14 +369,6 @@ void main() async {
 
     return Response.ok(jsonEncode({'message': 'Promotion added successfully'}));
   });
-
-  String? extractSessionId(Request request) {
-    final authHeader = request.headers['Authorization'];
-    if (authHeader != null && authHeader.startsWith('Bearer ')) {
-      return authHeader.substring(7); // Получаем токен после "Bearer "
-    }
-    return null;
-  }
 
   Middleware sessionChecker() {
     return (Handler handler) {

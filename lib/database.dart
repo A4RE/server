@@ -97,6 +97,12 @@ class AppDatabase extends _$AppDatabase {
     return await query.getSingleOrNull();
   }
 
+  Future<User?> getUserById(int id) async {
+    final query = select(users)..where((tbl) => tbl.id.equals(id));
+    return await query.getSingleOrNull();
+  }
+
+
   Future<List<Car>> getAllCars() async {
     return select(cars).get();
   }
