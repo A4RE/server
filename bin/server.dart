@@ -65,7 +65,6 @@ void main() async {
     try {
       final userId = await db.registerUser(fullName, email, password);
       
-      // Создаем сессию сразу после регистрации
       final session = await db.createSession(userId);
 
       return Response.ok(jsonEncode({
@@ -77,7 +76,6 @@ void main() async {
       return Response.internalServerError(body: jsonEncode({'error': 'Registration failed', 'details': e.toString()}));
     }
   });
-
 
   router.post('/login', (Request request) async {
     final payload = await request.readAsString();
@@ -93,7 +91,7 @@ void main() async {
     final user = await db.authenticateUser(email, password);
     if (user != null) {
       final session = await db.createSession(user.id);
-      //
+
       return Response.ok(jsonEncode({
         'message': 'Login successful',
         'userId': user.id,
@@ -123,11 +121,10 @@ void main() async {
       return Response.badRequest(body: jsonEncode({'error': 'Не найден идентификатор сессии в заголовке Authorization'}));
     }
 
-    // Удаление сессии из базы данных
     await db.deleteSession(sessionId);
 
     return Response.ok(jsonEncode({'message': 'Вы успешно вышли из системы'}), headers: {
-      'Authorization': 'Bearer ', // Очищаем заголовок Authorization, чтобы указать завершение сессии
+      'Authorization': 'Bearer ',
     });
   });
 
@@ -150,7 +147,6 @@ void main() async {
 
   protectedRouter.get('/user', (Request request) async {
     try {
-      // Извлечение userId из Query Parameters
       final userId = request.url.queryParameters['userId'];
       final id = int.tryParse(userId ?? '');
 
@@ -158,23 +154,87 @@ void main() async {
         return Response.badRequest(body: jsonEncode({'error': 'Invalid or missing user ID'}));
       }
 
-      // Получаем пользователя из базы данных
       final user = await db.getUserById(id);
       if (user == null) {
         return Response.notFound(jsonEncode({'error': 'User not found'}));
       }
 
-      // Возвращаем информацию о пользователе
       return Response.ok(jsonEncode({
         'id': user.id,
         'fullName': user.fullName,
         'email': user.email,
+        'photo': user.photo,
       }), headers: {'Content-Type': 'application/json'});
-
     } catch (e) {
       return Response.internalServerError(body: jsonEncode({'error': 'Failed to retrieve user data', 'details': e.toString()}));
     }
   });
+
+  protectedRouter.post('/updateUser', (Request request) async {
+    final boundary = request.headers['content-type']?.split('boundary=')[1];
+    if (boundary == null) {
+      return Response.badRequest(body: jsonEncode({'error': 'Invalid content type'}));
+    }
+
+    final transformer = MimeMultipartTransformer(boundary);
+    final parts = await transformer.bind(request.read()).toList();
+
+    String? fullName;
+    String? email;
+    String? photoPath;
+
+    for (final part in parts) {
+      final contentDisposition = part.headers['content-disposition'];
+      if (contentDisposition != null && contentDisposition.contains('filename=')) {
+        final content = await part.toList();
+        final fileName = contentDisposition.split('filename=')[1].replaceAll('"', '');
+        final fileBytes = content.expand((e) => e).toList();
+
+        final filePath = 'uploads/$fileName';
+        final file = File(filePath);
+        await file.writeAsBytes(fileBytes);
+
+        photoPath = filePath;
+      } else {
+        final field = utf8.decode(await part.expand((bytes) => bytes).toList());
+        if (contentDisposition!.contains('name="fullName"')) {
+          fullName = field;
+        } else if (contentDisposition.contains('name="email"')) {
+          email = field;
+        }
+      }
+    }
+
+    final sessionId = extractSessionId(request);
+    if (sessionId == null) {
+      return Response.forbidden(jsonEncode({'error': 'Not authorized'}));
+    }
+
+    final session = await db.getSessionById(sessionId);
+    if (session == null) {
+      return Response.forbidden(jsonEncode({'error': 'Session not found or expired'}));
+    }
+
+    try {
+
+      final user = await db.getUserById(session.userId);
+      if (user == null) {
+        return Response.notFound(jsonEncode({'error': 'User not found'}));
+      }
+
+      await db.updateUser(
+        id: session.userId,
+        fullName: fullName ?? user.fullName,
+        email: email ?? user.email,
+        photo: photoPath ?? user.photo,
+      );
+
+      return Response.ok(jsonEncode({'message': 'User updated successfully'}));
+    } catch (e) {
+      return Response.internalServerError(body: jsonEncode({'error': 'Failed to update user', 'details': e.toString()}));
+    }
+  });
+
 
   protectedRouter.get('/cars', (Request request) async {
     try {
@@ -373,14 +433,12 @@ void main() async {
   Middleware sessionChecker() {
     return (Handler handler) {
       return (Request request) async {
-        // Извлекаем sessionId из заголовка Authorization
         final sessionId = extractSessionId(request);
 
         if (sessionId == null || sessionId.isEmpty) {
           return Response.forbidden(jsonEncode({'error': 'Not authorized'}));
         }
 
-        // Проверяем сессию
         final session = await db.getSessionById(sessionId);
 
         if (session == null) {
@@ -391,12 +449,10 @@ void main() async {
         final inactiveDuration = now.difference(session.lastUsed);
 
         if (inactiveDuration > Duration(minutes: 15)) {
-          // Удаляем сессию, если она неактивна более 15 минут
           await db.deleteSession(sessionId);
           return Response.forbidden(jsonEncode({'error': 'Session expired due to inactivity'}));
         }
 
-        // Обновляем время последнего использования
         await db.updateSessionLastUsed(sessionId, now);
 
         return handler(request);
@@ -406,15 +462,15 @@ void main() async {
 
   final protectedHandler = Pipeline()
     .addMiddleware(sessionChecker())
-    .addHandler(protectedRouter);
+    .addHandler(protectedRouter.call);
 
 
   final handler = Pipeline()
       .addMiddleware(logRequests())
       .addMiddleware(corsHeaders())
       .addHandler((Router()
-      ..mount('/', router) // Публичные маршруты
-      ..mount('/', protectedHandler)).call); // Защищённые маршруты с проверкой сессии
+      ..mount('/', router.call)
+      ..mount('/', protectedHandler)).call);
 
   final server = await io.serve(handler, InternetAddress.anyIPv4, 8080);
   print('Server running on http://localhost:${server.port}');

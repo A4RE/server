@@ -12,8 +12,8 @@ class Sessions extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get sessionId => text().customConstraint('UNIQUE')();
   IntColumn get userId => integer().customConstraint('REFERENCES users(id)')();
-  DateTimeColumn get expiresAt => dateTime()(); // Дата окончания сессии
-  DateTimeColumn get lastUsed => dateTime().withDefault(currentDateAndTime)(); // Время последнего использования
+  DateTimeColumn get expiresAt => dateTime()();
+  DateTimeColumn get lastUsed => dateTime().withDefault(currentDateAndTime)();
 }
 
 @DataClassName('User')
@@ -22,6 +22,7 @@ class Users extends Table {
   TextColumn get fullName => text()();
   TextColumn get email => text().customConstraint('UNIQUE')();
   TextColumn get passwordHash => text()();
+  TextColumn get photo => text().nullable()();
 }
 
 @DataClassName('Promotion')
@@ -58,10 +59,9 @@ class AppDatabase extends _$AppDatabase {
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (Migrator m) async {
-      await m.createAll();  // создаст все таблицы, включая sessions
+      await m.createAll();
     },
     onUpgrade: (Migrator m, int from, int to) async {
-      // Обновление схемы при необходимости
     },
   );
 
@@ -100,6 +100,20 @@ class AppDatabase extends _$AppDatabase {
   Future<User?> getUserById(int id) async {
     final query = select(users)..where((tbl) => tbl.id.equals(id));
     return await query.getSingleOrNull();
+  }
+
+  Future<void> updateUser({
+    required int id,
+    required String fullName,
+    required String email,
+    String? photo,
+  }) async {
+    final user = UsersCompanion(
+      fullName: Value(fullName),
+      email: Value(email),
+      photo: Value(photo ?? ''),
+    );
+    await (update(users)..where((tbl) => tbl.id.equals(id))).write(user);
   }
 
 
@@ -159,7 +173,7 @@ class AppDatabase extends _$AppDatabase {
 
   Future<Session?> createSession(int userId) async {
     final sessionId = _generateSessionId(userId);
-    final expiresAt = DateTime.now().add(Duration(minutes: 15)); // Сессия истекает через 15 минут
+    final expiresAt = DateTime.now().add(Duration(minutes: 15));
     final lastUsed = DateTime.now();
 
     final session = SessionsCompanion(
@@ -193,7 +207,6 @@ class AppDatabase extends _$AppDatabase {
     await (delete(sessions)..where((tbl) => tbl.sessionId.equals(sessionId))).go();
   }
 }
-
 
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {

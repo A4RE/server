@@ -36,8 +36,14 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
   late final GeneratedColumn<String> passwordHash = GeneratedColumn<String>(
       'password_hash', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _photoMeta = const VerificationMeta('photo');
   @override
-  List<GeneratedColumn> get $columns => [id, fullName, email, passwordHash];
+  late final GeneratedColumn<String> photo = GeneratedColumn<String>(
+      'photo', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, fullName, email, passwordHash, photo];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -71,6 +77,10 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
     } else if (isInserting) {
       context.missing(_passwordHashMeta);
     }
+    if (data.containsKey('photo')) {
+      context.handle(
+          _photoMeta, photo.isAcceptableOrUnknown(data['photo']!, _photoMeta));
+    }
     return context;
   }
 
@@ -88,6 +98,8 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
           .read(DriftSqlType.string, data['${effectivePrefix}email'])!,
       passwordHash: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}password_hash'])!,
+      photo: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}photo']),
     );
   }
 
@@ -102,11 +114,13 @@ class User extends DataClass implements Insertable<User> {
   final String fullName;
   final String email;
   final String passwordHash;
+  final String? photo;
   const User(
       {required this.id,
       required this.fullName,
       required this.email,
-      required this.passwordHash});
+      required this.passwordHash,
+      this.photo});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -114,6 +128,9 @@ class User extends DataClass implements Insertable<User> {
     map['full_name'] = Variable<String>(fullName);
     map['email'] = Variable<String>(email);
     map['password_hash'] = Variable<String>(passwordHash);
+    if (!nullToAbsent || photo != null) {
+      map['photo'] = Variable<String>(photo);
+    }
     return map;
   }
 
@@ -123,6 +140,8 @@ class User extends DataClass implements Insertable<User> {
       fullName: Value(fullName),
       email: Value(email),
       passwordHash: Value(passwordHash),
+      photo:
+          photo == null && nullToAbsent ? const Value.absent() : Value(photo),
     );
   }
 
@@ -134,6 +153,7 @@ class User extends DataClass implements Insertable<User> {
       fullName: serializer.fromJson<String>(json['fullName']),
       email: serializer.fromJson<String>(json['email']),
       passwordHash: serializer.fromJson<String>(json['passwordHash']),
+      photo: serializer.fromJson<String?>(json['photo']),
     );
   }
   @override
@@ -144,16 +164,22 @@ class User extends DataClass implements Insertable<User> {
       'fullName': serializer.toJson<String>(fullName),
       'email': serializer.toJson<String>(email),
       'passwordHash': serializer.toJson<String>(passwordHash),
+      'photo': serializer.toJson<String?>(photo),
     };
   }
 
   User copyWith(
-          {int? id, String? fullName, String? email, String? passwordHash}) =>
+          {int? id,
+          String? fullName,
+          String? email,
+          String? passwordHash,
+          Value<String?> photo = const Value.absent()}) =>
       User(
         id: id ?? this.id,
         fullName: fullName ?? this.fullName,
         email: email ?? this.email,
         passwordHash: passwordHash ?? this.passwordHash,
+        photo: photo.present ? photo.value : this.photo,
       );
   User copyWithCompanion(UsersCompanion data) {
     return User(
@@ -163,6 +189,7 @@ class User extends DataClass implements Insertable<User> {
       passwordHash: data.passwordHash.present
           ? data.passwordHash.value
           : this.passwordHash,
+      photo: data.photo.present ? data.photo.value : this.photo,
     );
   }
 
@@ -172,13 +199,14 @@ class User extends DataClass implements Insertable<User> {
           ..write('id: $id, ')
           ..write('fullName: $fullName, ')
           ..write('email: $email, ')
-          ..write('passwordHash: $passwordHash')
+          ..write('passwordHash: $passwordHash, ')
+          ..write('photo: $photo')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, fullName, email, passwordHash);
+  int get hashCode => Object.hash(id, fullName, email, passwordHash, photo);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -186,7 +214,8 @@ class User extends DataClass implements Insertable<User> {
           other.id == this.id &&
           other.fullName == this.fullName &&
           other.email == this.email &&
-          other.passwordHash == this.passwordHash);
+          other.passwordHash == this.passwordHash &&
+          other.photo == this.photo);
 }
 
 class UsersCompanion extends UpdateCompanion<User> {
@@ -194,17 +223,20 @@ class UsersCompanion extends UpdateCompanion<User> {
   final Value<String> fullName;
   final Value<String> email;
   final Value<String> passwordHash;
+  final Value<String?> photo;
   const UsersCompanion({
     this.id = const Value.absent(),
     this.fullName = const Value.absent(),
     this.email = const Value.absent(),
     this.passwordHash = const Value.absent(),
+    this.photo = const Value.absent(),
   });
   UsersCompanion.insert({
     this.id = const Value.absent(),
     required String fullName,
     required String email,
     required String passwordHash,
+    this.photo = const Value.absent(),
   })  : fullName = Value(fullName),
         email = Value(email),
         passwordHash = Value(passwordHash);
@@ -213,12 +245,14 @@ class UsersCompanion extends UpdateCompanion<User> {
     Expression<String>? fullName,
     Expression<String>? email,
     Expression<String>? passwordHash,
+    Expression<String>? photo,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (fullName != null) 'full_name': fullName,
       if (email != null) 'email': email,
       if (passwordHash != null) 'password_hash': passwordHash,
+      if (photo != null) 'photo': photo,
     });
   }
 
@@ -226,12 +260,14 @@ class UsersCompanion extends UpdateCompanion<User> {
       {Value<int>? id,
       Value<String>? fullName,
       Value<String>? email,
-      Value<String>? passwordHash}) {
+      Value<String>? passwordHash,
+      Value<String?>? photo}) {
     return UsersCompanion(
       id: id ?? this.id,
       fullName: fullName ?? this.fullName,
       email: email ?? this.email,
       passwordHash: passwordHash ?? this.passwordHash,
+      photo: photo ?? this.photo,
     );
   }
 
@@ -250,6 +286,9 @@ class UsersCompanion extends UpdateCompanion<User> {
     if (passwordHash.present) {
       map['password_hash'] = Variable<String>(passwordHash.value);
     }
+    if (photo.present) {
+      map['photo'] = Variable<String>(photo.value);
+    }
     return map;
   }
 
@@ -259,7 +298,8 @@ class UsersCompanion extends UpdateCompanion<User> {
           ..write('id: $id, ')
           ..write('fullName: $fullName, ')
           ..write('email: $email, ')
-          ..write('passwordHash: $passwordHash')
+          ..write('passwordHash: $passwordHash, ')
+          ..write('photo: $photo')
           ..write(')'))
         .toString();
   }
@@ -1429,12 +1469,14 @@ typedef $$UsersTableCreateCompanionBuilder = UsersCompanion Function({
   required String fullName,
   required String email,
   required String passwordHash,
+  Value<String?> photo,
 });
 typedef $$UsersTableUpdateCompanionBuilder = UsersCompanion Function({
   Value<int> id,
   Value<String> fullName,
   Value<String> email,
   Value<String> passwordHash,
+  Value<String?> photo,
 });
 
 final class $$UsersTableReferences
@@ -1475,6 +1517,9 @@ class $$UsersTableFilterComposer extends Composer<_$AppDatabase, $UsersTable> {
 
   ColumnFilters<String> get passwordHash => $composableBuilder(
       column: $table.passwordHash, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get photo => $composableBuilder(
+      column: $table.photo, builder: (column) => ColumnFilters(column));
 
   Expression<bool> sessionsRefs(
       Expression<bool> Function($$SessionsTableFilterComposer f) f) {
@@ -1519,6 +1564,9 @@ class $$UsersTableOrderingComposer
   ColumnOrderings<String> get passwordHash => $composableBuilder(
       column: $table.passwordHash,
       builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get photo => $composableBuilder(
+      column: $table.photo, builder: (column) => ColumnOrderings(column));
 }
 
 class $$UsersTableAnnotationComposer
@@ -1541,6 +1589,9 @@ class $$UsersTableAnnotationComposer
 
   GeneratedColumn<String> get passwordHash => $composableBuilder(
       column: $table.passwordHash, builder: (column) => column);
+
+  GeneratedColumn<String> get photo =>
+      $composableBuilder(column: $table.photo, builder: (column) => column);
 
   Expression<T> sessionsRefs<T extends Object>(
       Expression<T> Function($$SessionsTableAnnotationComposer a) f) {
@@ -1591,24 +1642,28 @@ class $$UsersTableTableManager extends RootTableManager<
             Value<String> fullName = const Value.absent(),
             Value<String> email = const Value.absent(),
             Value<String> passwordHash = const Value.absent(),
+            Value<String?> photo = const Value.absent(),
           }) =>
               UsersCompanion(
             id: id,
             fullName: fullName,
             email: email,
             passwordHash: passwordHash,
+            photo: photo,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
             required String fullName,
             required String email,
             required String passwordHash,
+            Value<String?> photo = const Value.absent(),
           }) =>
               UsersCompanion.insert(
             id: id,
             fullName: fullName,
             email: email,
             passwordHash: passwordHash,
+            photo: photo,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) =>
