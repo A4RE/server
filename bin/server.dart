@@ -6,6 +6,8 @@ import 'package:shelf_router/shelf_router.dart';
 import 'package:shelf_static/shelf_static.dart';
 import 'package:server/database.dart';
 import 'package:mime/mime.dart';
+import 'package:shelf_static/shelf_static.dart';
+
 
 final db = AppDatabase();
 
@@ -39,7 +41,7 @@ void main() async {
   final staticFilesHandler = createStaticHandler('uploads', defaultDocument: 'index.html');
 
   router.mount('/uploads/', staticFilesHandler);
-
+  
   router.post('/register', (Request request) async {
     final payload = await request.readAsString();
     final data = Uri.splitQueryString(payload);

@@ -170,10 +170,10 @@ packages:
     dependency: transitive
     description:
       name: coverage
-      sha256: "88b0fddbe4c92910fefc09cc0248f5e7f0cd23e450ded4c28f16ab8ee8f83268"
+      sha256: "4b03e11f6d5b8f6e5bb5e9f7889a56fe6c5cbe942da5378ea4d4d7f73ef9dfe5"
       url: "https://pub.dev"
     source: hosted
-    version: "1.10.0"
+    version: "1.11.0"
   crypto:
     dependency: transitive
     description:
@@ -254,6 +254,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.3.2"
+  http:
+    dependency: transitive
+    description:
+      name: http
+      sha256: b9c29a161230ee03d3ccf545097fccd9b87a5264228c5d348202e0f0c28f9010
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.2.2"
   http_methods:
     dependency: transitive
     description:
@@ -358,6 +366,30 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.2"
+  openapi_generator:
+    dependency: "direct dev"
+    description:
+      name: openapi_generator
+      sha256: f3a9b2f485083f31670ef1b94a6fc9d14dbd8b5f717ca5f88f42e251c463295a
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.0.0"
+  openapi_generator_annotations:
+    dependency: transitive
+    description:
+      name: openapi_generator_annotations
+      sha256: f5019be401d709c8ac20af42b8f9fa2f0a8428a324a56308b2b3846bc8c23c00
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.0.0"
+  openapi_generator_cli:
+    dependency: transitive
+    description:
+      name: openapi_generator_cli
+      sha256: "503e553d699508546ebae33235603271df20bb7b805296c7624afe5d5389101c"
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.0.0"
   package_config:
     dependency: transitive
     description:
@@ -438,6 +470,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.3"
+  shelf_swagger_ui:
+    dependency: "direct dev"
+    description:
+      name: shelf_swagger_ui
+      sha256: "36793398760659311d767f2fd9760bac18784b7bf8fca2756d83a387b6268443"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.0+2"
   shelf_web_socket:
     dependency: transitive
     description:
