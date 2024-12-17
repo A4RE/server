@@ -355,12 +355,12 @@ class $CarsTable extends Cars with TableInfo<$CarsTable, Car> {
       requiredDuringInsert: true,
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('CHECK ("is_popular" IN (0, 1))'));
-  static const VerificationMeta _descriptionMeta =
-      const VerificationMeta('description');
+  static const VerificationMeta _localizedDescriptionMeta =
+      const VerificationMeta('localizedDescription');
   @override
-  late final GeneratedColumn<String> description = GeneratedColumn<String>(
-      'description', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
+  late final GeneratedColumn<String> localizedDescription =
+      GeneratedColumn<String>('localized_description', aliasedName, false,
+          type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _engineTypeMeta =
       const VerificationMeta('engineType');
   @override
@@ -372,16 +372,17 @@ class $CarsTable extends Cars with TableInfo<$CarsTable, Car> {
   late final GeneratedColumn<int> power = GeneratedColumn<int>(
       'power', aliasedName, false,
       type: DriftSqlType.int, requiredDuringInsert: true);
-  static const VerificationMeta _fuelTypeMeta =
-      const VerificationMeta('fuelType');
+  static const VerificationMeta _localizedFuelTypeMeta =
+      const VerificationMeta('localizedFuelType');
   @override
-  late final GeneratedColumn<String> fuelType = GeneratedColumn<String>(
-      'fuel_type', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _colorMeta = const VerificationMeta('color');
+  late final GeneratedColumn<String> localizedFuelType =
+      GeneratedColumn<String>('localized_fuel_type', aliasedName, false,
+          type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _localizedColorMeta =
+      const VerificationMeta('localizedColor');
   @override
-  late final GeneratedColumn<String> color = GeneratedColumn<String>(
-      'color', aliasedName, false,
+  late final GeneratedColumn<String> localizedColor = GeneratedColumn<String>(
+      'localized_color', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _driveTypeMeta =
       const VerificationMeta('driveType');
@@ -398,11 +399,11 @@ class $CarsTable extends Cars with TableInfo<$CarsTable, Car> {
         reviewCount,
         rentalPricePerDay,
         isPopular,
-        description,
+        localizedDescription,
         engineType,
         power,
-        fuelType,
-        color,
+        localizedFuelType,
+        localizedColor,
         driveType
       ];
   @override
@@ -458,13 +459,13 @@ class $CarsTable extends Cars with TableInfo<$CarsTable, Car> {
     } else if (isInserting) {
       context.missing(_isPopularMeta);
     }
-    if (data.containsKey('description')) {
+    if (data.containsKey('localized_description')) {
       context.handle(
-          _descriptionMeta,
-          description.isAcceptableOrUnknown(
-              data['description']!, _descriptionMeta));
+          _localizedDescriptionMeta,
+          localizedDescription.isAcceptableOrUnknown(
+              data['localized_description']!, _localizedDescriptionMeta));
     } else if (isInserting) {
-      context.missing(_descriptionMeta);
+      context.missing(_localizedDescriptionMeta);
     }
     if (data.containsKey('engine_type')) {
       context.handle(
@@ -480,17 +481,21 @@ class $CarsTable extends Cars with TableInfo<$CarsTable, Car> {
     } else if (isInserting) {
       context.missing(_powerMeta);
     }
-    if (data.containsKey('fuel_type')) {
-      context.handle(_fuelTypeMeta,
-          fuelType.isAcceptableOrUnknown(data['fuel_type']!, _fuelTypeMeta));
-    } else if (isInserting) {
-      context.missing(_fuelTypeMeta);
-    }
-    if (data.containsKey('color')) {
+    if (data.containsKey('localized_fuel_type')) {
       context.handle(
-          _colorMeta, color.isAcceptableOrUnknown(data['color']!, _colorMeta));
+          _localizedFuelTypeMeta,
+          localizedFuelType.isAcceptableOrUnknown(
+              data['localized_fuel_type']!, _localizedFuelTypeMeta));
     } else if (isInserting) {
-      context.missing(_colorMeta);
+      context.missing(_localizedFuelTypeMeta);
+    }
+    if (data.containsKey('localized_color')) {
+      context.handle(
+          _localizedColorMeta,
+          localizedColor.isAcceptableOrUnknown(
+              data['localized_color']!, _localizedColorMeta));
+    } else if (isInserting) {
+      context.missing(_localizedColorMeta);
     }
     if (data.containsKey('drive_type')) {
       context.handle(_driveTypeMeta,
@@ -521,16 +526,17 @@ class $CarsTable extends Cars with TableInfo<$CarsTable, Car> {
           DriftSqlType.double, data['${effectivePrefix}rental_price_per_day'])!,
       isPopular: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}is_popular'])!,
-      description: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}description'])!,
+      localizedDescription: attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}localized_description'])!,
       engineType: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}engine_type'])!,
       power: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}power'])!,
-      fuelType: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}fuel_type'])!,
-      color: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}color'])!,
+      localizedFuelType: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}localized_fuel_type'])!,
+      localizedColor: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}localized_color'])!,
       driveType: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}drive_type'])!,
     );
@@ -550,11 +556,11 @@ class Car extends DataClass implements Insertable<Car> {
   final double reviewCount;
   final double rentalPricePerDay;
   final bool isPopular;
-  final String description;
+  final String localizedDescription;
   final String engineType;
   final int power;
-  final String fuelType;
-  final String color;
+  final String localizedFuelType;
+  final String localizedColor;
   final String driveType;
   const Car(
       {required this.id,
@@ -564,11 +570,11 @@ class Car extends DataClass implements Insertable<Car> {
       required this.reviewCount,
       required this.rentalPricePerDay,
       required this.isPopular,
-      required this.description,
+      required this.localizedDescription,
       required this.engineType,
       required this.power,
-      required this.fuelType,
-      required this.color,
+      required this.localizedFuelType,
+      required this.localizedColor,
       required this.driveType});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -580,11 +586,11 @@ class Car extends DataClass implements Insertable<Car> {
     map['review_count'] = Variable<double>(reviewCount);
     map['rental_price_per_day'] = Variable<double>(rentalPricePerDay);
     map['is_popular'] = Variable<bool>(isPopular);
-    map['description'] = Variable<String>(description);
+    map['localized_description'] = Variable<String>(localizedDescription);
     map['engine_type'] = Variable<String>(engineType);
     map['power'] = Variable<int>(power);
-    map['fuel_type'] = Variable<String>(fuelType);
-    map['color'] = Variable<String>(color);
+    map['localized_fuel_type'] = Variable<String>(localizedFuelType);
+    map['localized_color'] = Variable<String>(localizedColor);
     map['drive_type'] = Variable<String>(driveType);
     return map;
   }
@@ -598,11 +604,11 @@ class Car extends DataClass implements Insertable<Car> {
       reviewCount: Value(reviewCount),
       rentalPricePerDay: Value(rentalPricePerDay),
       isPopular: Value(isPopular),
-      description: Value(description),
+      localizedDescription: Value(localizedDescription),
       engineType: Value(engineType),
       power: Value(power),
-      fuelType: Value(fuelType),
-      color: Value(color),
+      localizedFuelType: Value(localizedFuelType),
+      localizedColor: Value(localizedColor),
       driveType: Value(driveType),
     );
   }
@@ -618,11 +624,12 @@ class Car extends DataClass implements Insertable<Car> {
       reviewCount: serializer.fromJson<double>(json['reviewCount']),
       rentalPricePerDay: serializer.fromJson<double>(json['rentalPricePerDay']),
       isPopular: serializer.fromJson<bool>(json['isPopular']),
-      description: serializer.fromJson<String>(json['description']),
+      localizedDescription:
+          serializer.fromJson<String>(json['localizedDescription']),
       engineType: serializer.fromJson<String>(json['engineType']),
       power: serializer.fromJson<int>(json['power']),
-      fuelType: serializer.fromJson<String>(json['fuelType']),
-      color: serializer.fromJson<String>(json['color']),
+      localizedFuelType: serializer.fromJson<String>(json['localizedFuelType']),
+      localizedColor: serializer.fromJson<String>(json['localizedColor']),
       driveType: serializer.fromJson<String>(json['driveType']),
     );
   }
@@ -637,11 +644,11 @@ class Car extends DataClass implements Insertable<Car> {
       'reviewCount': serializer.toJson<double>(reviewCount),
       'rentalPricePerDay': serializer.toJson<double>(rentalPricePerDay),
       'isPopular': serializer.toJson<bool>(isPopular),
-      'description': serializer.toJson<String>(description),
+      'localizedDescription': serializer.toJson<String>(localizedDescription),
       'engineType': serializer.toJson<String>(engineType),
       'power': serializer.toJson<int>(power),
-      'fuelType': serializer.toJson<String>(fuelType),
-      'color': serializer.toJson<String>(color),
+      'localizedFuelType': serializer.toJson<String>(localizedFuelType),
+      'localizedColor': serializer.toJson<String>(localizedColor),
       'driveType': serializer.toJson<String>(driveType),
     };
   }
@@ -654,11 +661,11 @@ class Car extends DataClass implements Insertable<Car> {
           double? reviewCount,
           double? rentalPricePerDay,
           bool? isPopular,
-          String? description,
+          String? localizedDescription,
           String? engineType,
           int? power,
-          String? fuelType,
-          String? color,
+          String? localizedFuelType,
+          String? localizedColor,
           String? driveType}) =>
       Car(
         id: id ?? this.id,
@@ -668,11 +675,11 @@ class Car extends DataClass implements Insertable<Car> {
         reviewCount: reviewCount ?? this.reviewCount,
         rentalPricePerDay: rentalPricePerDay ?? this.rentalPricePerDay,
         isPopular: isPopular ?? this.isPopular,
-        description: description ?? this.description,
+        localizedDescription: localizedDescription ?? this.localizedDescription,
         engineType: engineType ?? this.engineType,
         power: power ?? this.power,
-        fuelType: fuelType ?? this.fuelType,
-        color: color ?? this.color,
+        localizedFuelType: localizedFuelType ?? this.localizedFuelType,
+        localizedColor: localizedColor ?? this.localizedColor,
         driveType: driveType ?? this.driveType,
       );
   Car copyWithCompanion(CarsCompanion data) {
@@ -687,13 +694,18 @@ class Car extends DataClass implements Insertable<Car> {
           ? data.rentalPricePerDay.value
           : this.rentalPricePerDay,
       isPopular: data.isPopular.present ? data.isPopular.value : this.isPopular,
-      description:
-          data.description.present ? data.description.value : this.description,
+      localizedDescription: data.localizedDescription.present
+          ? data.localizedDescription.value
+          : this.localizedDescription,
       engineType:
           data.engineType.present ? data.engineType.value : this.engineType,
       power: data.power.present ? data.power.value : this.power,
-      fuelType: data.fuelType.present ? data.fuelType.value : this.fuelType,
-      color: data.color.present ? data.color.value : this.color,
+      localizedFuelType: data.localizedFuelType.present
+          ? data.localizedFuelType.value
+          : this.localizedFuelType,
+      localizedColor: data.localizedColor.present
+          ? data.localizedColor.value
+          : this.localizedColor,
       driveType: data.driveType.present ? data.driveType.value : this.driveType,
     );
   }
@@ -708,11 +720,11 @@ class Car extends DataClass implements Insertable<Car> {
           ..write('reviewCount: $reviewCount, ')
           ..write('rentalPricePerDay: $rentalPricePerDay, ')
           ..write('isPopular: $isPopular, ')
-          ..write('description: $description, ')
+          ..write('localizedDescription: $localizedDescription, ')
           ..write('engineType: $engineType, ')
           ..write('power: $power, ')
-          ..write('fuelType: $fuelType, ')
-          ..write('color: $color, ')
+          ..write('localizedFuelType: $localizedFuelType, ')
+          ..write('localizedColor: $localizedColor, ')
           ..write('driveType: $driveType')
           ..write(')'))
         .toString();
@@ -727,11 +739,11 @@ class Car extends DataClass implements Insertable<Car> {
       reviewCount,
       rentalPricePerDay,
       isPopular,
-      description,
+      localizedDescription,
       engineType,
       power,
-      fuelType,
-      color,
+      localizedFuelType,
+      localizedColor,
       driveType);
   @override
   bool operator ==(Object other) =>
@@ -744,11 +756,11 @@ class Car extends DataClass implements Insertable<Car> {
           other.reviewCount == this.reviewCount &&
           other.rentalPricePerDay == this.rentalPricePerDay &&
           other.isPopular == this.isPopular &&
-          other.description == this.description &&
+          other.localizedDescription == this.localizedDescription &&
           other.engineType == this.engineType &&
           other.power == this.power &&
-          other.fuelType == this.fuelType &&
-          other.color == this.color &&
+          other.localizedFuelType == this.localizedFuelType &&
+          other.localizedColor == this.localizedColor &&
           other.driveType == this.driveType);
 }
 
@@ -760,11 +772,11 @@ class CarsCompanion extends UpdateCompanion<Car> {
   final Value<double> reviewCount;
   final Value<double> rentalPricePerDay;
   final Value<bool> isPopular;
-  final Value<String> description;
+  final Value<String> localizedDescription;
   final Value<String> engineType;
   final Value<int> power;
-  final Value<String> fuelType;
-  final Value<String> color;
+  final Value<String> localizedFuelType;
+  final Value<String> localizedColor;
   final Value<String> driveType;
   const CarsCompanion({
     this.id = const Value.absent(),
@@ -774,11 +786,11 @@ class CarsCompanion extends UpdateCompanion<Car> {
     this.reviewCount = const Value.absent(),
     this.rentalPricePerDay = const Value.absent(),
     this.isPopular = const Value.absent(),
-    this.description = const Value.absent(),
+    this.localizedDescription = const Value.absent(),
     this.engineType = const Value.absent(),
     this.power = const Value.absent(),
-    this.fuelType = const Value.absent(),
-    this.color = const Value.absent(),
+    this.localizedFuelType = const Value.absent(),
+    this.localizedColor = const Value.absent(),
     this.driveType = const Value.absent(),
   });
   CarsCompanion.insert({
@@ -789,11 +801,11 @@ class CarsCompanion extends UpdateCompanion<Car> {
     required double reviewCount,
     required double rentalPricePerDay,
     required bool isPopular,
-    required String description,
+    required String localizedDescription,
     required String engineType,
     required int power,
-    required String fuelType,
-    required String color,
+    required String localizedFuelType,
+    required String localizedColor,
     required String driveType,
   })  : photos = Value(photos),
         name = Value(name),
@@ -801,11 +813,11 @@ class CarsCompanion extends UpdateCompanion<Car> {
         reviewCount = Value(reviewCount),
         rentalPricePerDay = Value(rentalPricePerDay),
         isPopular = Value(isPopular),
-        description = Value(description),
+        localizedDescription = Value(localizedDescription),
         engineType = Value(engineType),
         power = Value(power),
-        fuelType = Value(fuelType),
-        color = Value(color),
+        localizedFuelType = Value(localizedFuelType),
+        localizedColor = Value(localizedColor),
         driveType = Value(driveType);
   static Insertable<Car> custom({
     Expression<int>? id,
@@ -815,11 +827,11 @@ class CarsCompanion extends UpdateCompanion<Car> {
     Expression<double>? reviewCount,
     Expression<double>? rentalPricePerDay,
     Expression<bool>? isPopular,
-    Expression<String>? description,
+    Expression<String>? localizedDescription,
     Expression<String>? engineType,
     Expression<int>? power,
-    Expression<String>? fuelType,
-    Expression<String>? color,
+    Expression<String>? localizedFuelType,
+    Expression<String>? localizedColor,
     Expression<String>? driveType,
   }) {
     return RawValuesInsertable({
@@ -830,11 +842,12 @@ class CarsCompanion extends UpdateCompanion<Car> {
       if (reviewCount != null) 'review_count': reviewCount,
       if (rentalPricePerDay != null) 'rental_price_per_day': rentalPricePerDay,
       if (isPopular != null) 'is_popular': isPopular,
-      if (description != null) 'description': description,
+      if (localizedDescription != null)
+        'localized_description': localizedDescription,
       if (engineType != null) 'engine_type': engineType,
       if (power != null) 'power': power,
-      if (fuelType != null) 'fuel_type': fuelType,
-      if (color != null) 'color': color,
+      if (localizedFuelType != null) 'localized_fuel_type': localizedFuelType,
+      if (localizedColor != null) 'localized_color': localizedColor,
       if (driveType != null) 'drive_type': driveType,
     });
   }
@@ -847,11 +860,11 @@ class CarsCompanion extends UpdateCompanion<Car> {
       Value<double>? reviewCount,
       Value<double>? rentalPricePerDay,
       Value<bool>? isPopular,
-      Value<String>? description,
+      Value<String>? localizedDescription,
       Value<String>? engineType,
       Value<int>? power,
-      Value<String>? fuelType,
-      Value<String>? color,
+      Value<String>? localizedFuelType,
+      Value<String>? localizedColor,
       Value<String>? driveType}) {
     return CarsCompanion(
       id: id ?? this.id,
@@ -861,11 +874,11 @@ class CarsCompanion extends UpdateCompanion<Car> {
       reviewCount: reviewCount ?? this.reviewCount,
       rentalPricePerDay: rentalPricePerDay ?? this.rentalPricePerDay,
       isPopular: isPopular ?? this.isPopular,
-      description: description ?? this.description,
+      localizedDescription: localizedDescription ?? this.localizedDescription,
       engineType: engineType ?? this.engineType,
       power: power ?? this.power,
-      fuelType: fuelType ?? this.fuelType,
-      color: color ?? this.color,
+      localizedFuelType: localizedFuelType ?? this.localizedFuelType,
+      localizedColor: localizedColor ?? this.localizedColor,
       driveType: driveType ?? this.driveType,
     );
   }
@@ -894,8 +907,9 @@ class CarsCompanion extends UpdateCompanion<Car> {
     if (isPopular.present) {
       map['is_popular'] = Variable<bool>(isPopular.value);
     }
-    if (description.present) {
-      map['description'] = Variable<String>(description.value);
+    if (localizedDescription.present) {
+      map['localized_description'] =
+          Variable<String>(localizedDescription.value);
     }
     if (engineType.present) {
       map['engine_type'] = Variable<String>(engineType.value);
@@ -903,11 +917,11 @@ class CarsCompanion extends UpdateCompanion<Car> {
     if (power.present) {
       map['power'] = Variable<int>(power.value);
     }
-    if (fuelType.present) {
-      map['fuel_type'] = Variable<String>(fuelType.value);
+    if (localizedFuelType.present) {
+      map['localized_fuel_type'] = Variable<String>(localizedFuelType.value);
     }
-    if (color.present) {
-      map['color'] = Variable<String>(color.value);
+    if (localizedColor.present) {
+      map['localized_color'] = Variable<String>(localizedColor.value);
     }
     if (driveType.present) {
       map['drive_type'] = Variable<String>(driveType.value);
@@ -925,11 +939,11 @@ class CarsCompanion extends UpdateCompanion<Car> {
           ..write('reviewCount: $reviewCount, ')
           ..write('rentalPricePerDay: $rentalPricePerDay, ')
           ..write('isPopular: $isPopular, ')
-          ..write('description: $description, ')
+          ..write('localizedDescription: $localizedDescription, ')
           ..write('engineType: $engineType, ')
           ..write('power: $power, ')
-          ..write('fuelType: $fuelType, ')
-          ..write('color: $color, ')
+          ..write('localizedFuelType: $localizedFuelType, ')
+          ..write('localizedColor: $localizedColor, ')
           ..write('driveType: $driveType')
           ..write(')'))
         .toString();
@@ -951,10 +965,11 @@ class $PromotionsTable extends Promotions
       requiredDuringInsert: false,
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
-  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  static const VerificationMeta _localizedNameMeta =
+      const VerificationMeta('localizedName');
   @override
-  late final GeneratedColumn<String> name = GeneratedColumn<String>(
-      'name', aliasedName, false,
+  late final GeneratedColumn<String> localizedName = GeneratedColumn<String>(
+      'localized_name', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _photoMeta = const VerificationMeta('photo');
   @override
@@ -962,7 +977,7 @@ class $PromotionsTable extends Promotions
       'photo', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
   @override
-  List<GeneratedColumn> get $columns => [id, name, photo];
+  List<GeneratedColumn> get $columns => [id, localizedName, photo];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -976,11 +991,13 @@ class $PromotionsTable extends Promotions
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
     }
-    if (data.containsKey('name')) {
+    if (data.containsKey('localized_name')) {
       context.handle(
-          _nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
+          _localizedNameMeta,
+          localizedName.isAcceptableOrUnknown(
+              data['localized_name']!, _localizedNameMeta));
     } else if (isInserting) {
-      context.missing(_nameMeta);
+      context.missing(_localizedNameMeta);
     }
     if (data.containsKey('photo')) {
       context.handle(
@@ -999,8 +1016,8 @@ class $PromotionsTable extends Promotions
     return Promotion(
       id: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
-      name: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
+      localizedName: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}localized_name'])!,
       photo: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}photo'])!,
     );
@@ -1014,14 +1031,15 @@ class $PromotionsTable extends Promotions
 
 class Promotion extends DataClass implements Insertable<Promotion> {
   final int id;
-  final String name;
+  final String localizedName;
   final String photo;
-  const Promotion({required this.id, required this.name, required this.photo});
+  const Promotion(
+      {required this.id, required this.localizedName, required this.photo});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
-    map['name'] = Variable<String>(name);
+    map['localized_name'] = Variable<String>(localizedName);
     map['photo'] = Variable<String>(photo);
     return map;
   }
@@ -1029,7 +1047,7 @@ class Promotion extends DataClass implements Insertable<Promotion> {
   PromotionsCompanion toCompanion(bool nullToAbsent) {
     return PromotionsCompanion(
       id: Value(id),
-      name: Value(name),
+      localizedName: Value(localizedName),
       photo: Value(photo),
     );
   }
@@ -1039,7 +1057,7 @@ class Promotion extends DataClass implements Insertable<Promotion> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Promotion(
       id: serializer.fromJson<int>(json['id']),
-      name: serializer.fromJson<String>(json['name']),
+      localizedName: serializer.fromJson<String>(json['localizedName']),
       photo: serializer.fromJson<String>(json['photo']),
     );
   }
@@ -1048,20 +1066,23 @@ class Promotion extends DataClass implements Insertable<Promotion> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
-      'name': serializer.toJson<String>(name),
+      'localizedName': serializer.toJson<String>(localizedName),
       'photo': serializer.toJson<String>(photo),
     };
   }
 
-  Promotion copyWith({int? id, String? name, String? photo}) => Promotion(
+  Promotion copyWith({int? id, String? localizedName, String? photo}) =>
+      Promotion(
         id: id ?? this.id,
-        name: name ?? this.name,
+        localizedName: localizedName ?? this.localizedName,
         photo: photo ?? this.photo,
       );
   Promotion copyWithCompanion(PromotionsCompanion data) {
     return Promotion(
       id: data.id.present ? data.id.value : this.id,
-      name: data.name.present ? data.name.value : this.name,
+      localizedName: data.localizedName.present
+          ? data.localizedName.value
+          : this.localizedName,
       photo: data.photo.present ? data.photo.value : this.photo,
     );
   }
@@ -1070,55 +1091,55 @@ class Promotion extends DataClass implements Insertable<Promotion> {
   String toString() {
     return (StringBuffer('Promotion(')
           ..write('id: $id, ')
-          ..write('name: $name, ')
+          ..write('localizedName: $localizedName, ')
           ..write('photo: $photo')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, name, photo);
+  int get hashCode => Object.hash(id, localizedName, photo);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is Promotion &&
           other.id == this.id &&
-          other.name == this.name &&
+          other.localizedName == this.localizedName &&
           other.photo == this.photo);
 }
 
 class PromotionsCompanion extends UpdateCompanion<Promotion> {
   final Value<int> id;
-  final Value<String> name;
+  final Value<String> localizedName;
   final Value<String> photo;
   const PromotionsCompanion({
     this.id = const Value.absent(),
-    this.name = const Value.absent(),
+    this.localizedName = const Value.absent(),
     this.photo = const Value.absent(),
   });
   PromotionsCompanion.insert({
     this.id = const Value.absent(),
-    required String name,
+    required String localizedName,
     required String photo,
-  })  : name = Value(name),
+  })  : localizedName = Value(localizedName),
         photo = Value(photo);
   static Insertable<Promotion> custom({
     Expression<int>? id,
-    Expression<String>? name,
+    Expression<String>? localizedName,
     Expression<String>? photo,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
-      if (name != null) 'name': name,
+      if (localizedName != null) 'localized_name': localizedName,
       if (photo != null) 'photo': photo,
     });
   }
 
   PromotionsCompanion copyWith(
-      {Value<int>? id, Value<String>? name, Value<String>? photo}) {
+      {Value<int>? id, Value<String>? localizedName, Value<String>? photo}) {
     return PromotionsCompanion(
       id: id ?? this.id,
-      name: name ?? this.name,
+      localizedName: localizedName ?? this.localizedName,
       photo: photo ?? this.photo,
     );
   }
@@ -1129,8 +1150,8 @@ class PromotionsCompanion extends UpdateCompanion<Promotion> {
     if (id.present) {
       map['id'] = Variable<int>(id.value);
     }
-    if (name.present) {
-      map['name'] = Variable<String>(name.value);
+    if (localizedName.present) {
+      map['localized_name'] = Variable<String>(localizedName.value);
     }
     if (photo.present) {
       map['photo'] = Variable<String>(photo.value);
@@ -1142,7 +1163,7 @@ class PromotionsCompanion extends UpdateCompanion<Promotion> {
   String toString() {
     return (StringBuffer('PromotionsCompanion(')
           ..write('id: $id, ')
-          ..write('name: $name, ')
+          ..write('localizedName: $localizedName, ')
           ..write('photo: $photo')
           ..write(')'))
         .toString();
@@ -1714,11 +1735,11 @@ typedef $$CarsTableCreateCompanionBuilder = CarsCompanion Function({
   required double reviewCount,
   required double rentalPricePerDay,
   required bool isPopular,
-  required String description,
+  required String localizedDescription,
   required String engineType,
   required int power,
-  required String fuelType,
-  required String color,
+  required String localizedFuelType,
+  required String localizedColor,
   required String driveType,
 });
 typedef $$CarsTableUpdateCompanionBuilder = CarsCompanion Function({
@@ -1729,11 +1750,11 @@ typedef $$CarsTableUpdateCompanionBuilder = CarsCompanion Function({
   Value<double> reviewCount,
   Value<double> rentalPricePerDay,
   Value<bool> isPopular,
-  Value<String> description,
+  Value<String> localizedDescription,
   Value<String> engineType,
   Value<int> power,
-  Value<String> fuelType,
-  Value<String> color,
+  Value<String> localizedFuelType,
+  Value<String> localizedColor,
   Value<String> driveType,
 });
 
@@ -1767,8 +1788,9 @@ class $$CarsTableFilterComposer extends Composer<_$AppDatabase, $CarsTable> {
   ColumnFilters<bool> get isPopular => $composableBuilder(
       column: $table.isPopular, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get description => $composableBuilder(
-      column: $table.description, builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get localizedDescription => $composableBuilder(
+      column: $table.localizedDescription,
+      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get engineType => $composableBuilder(
       column: $table.engineType, builder: (column) => ColumnFilters(column));
@@ -1776,11 +1798,13 @@ class $$CarsTableFilterComposer extends Composer<_$AppDatabase, $CarsTable> {
   ColumnFilters<int> get power => $composableBuilder(
       column: $table.power, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get fuelType => $composableBuilder(
-      column: $table.fuelType, builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get localizedFuelType => $composableBuilder(
+      column: $table.localizedFuelType,
+      builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get color => $composableBuilder(
-      column: $table.color, builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get localizedColor => $composableBuilder(
+      column: $table.localizedColor,
+      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get driveType => $composableBuilder(
       column: $table.driveType, builder: (column) => ColumnFilters(column));
@@ -1816,8 +1840,9 @@ class $$CarsTableOrderingComposer extends Composer<_$AppDatabase, $CarsTable> {
   ColumnOrderings<bool> get isPopular => $composableBuilder(
       column: $table.isPopular, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get description => $composableBuilder(
-      column: $table.description, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<String> get localizedDescription => $composableBuilder(
+      column: $table.localizedDescription,
+      builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get engineType => $composableBuilder(
       column: $table.engineType, builder: (column) => ColumnOrderings(column));
@@ -1825,11 +1850,13 @@ class $$CarsTableOrderingComposer extends Composer<_$AppDatabase, $CarsTable> {
   ColumnOrderings<int> get power => $composableBuilder(
       column: $table.power, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get fuelType => $composableBuilder(
-      column: $table.fuelType, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<String> get localizedFuelType => $composableBuilder(
+      column: $table.localizedFuelType,
+      builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get color => $composableBuilder(
-      column: $table.color, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<String> get localizedColor => $composableBuilder(
+      column: $table.localizedColor,
+      builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get driveType => $composableBuilder(
       column: $table.driveType, builder: (column) => ColumnOrderings(column));
@@ -1865,8 +1892,8 @@ class $$CarsTableAnnotationComposer
   GeneratedColumn<bool> get isPopular =>
       $composableBuilder(column: $table.isPopular, builder: (column) => column);
 
-  GeneratedColumn<String> get description => $composableBuilder(
-      column: $table.description, builder: (column) => column);
+  GeneratedColumn<String> get localizedDescription => $composableBuilder(
+      column: $table.localizedDescription, builder: (column) => column);
 
   GeneratedColumn<String> get engineType => $composableBuilder(
       column: $table.engineType, builder: (column) => column);
@@ -1874,11 +1901,11 @@ class $$CarsTableAnnotationComposer
   GeneratedColumn<int> get power =>
       $composableBuilder(column: $table.power, builder: (column) => column);
 
-  GeneratedColumn<String> get fuelType =>
-      $composableBuilder(column: $table.fuelType, builder: (column) => column);
+  GeneratedColumn<String> get localizedFuelType => $composableBuilder(
+      column: $table.localizedFuelType, builder: (column) => column);
 
-  GeneratedColumn<String> get color =>
-      $composableBuilder(column: $table.color, builder: (column) => column);
+  GeneratedColumn<String> get localizedColor => $composableBuilder(
+      column: $table.localizedColor, builder: (column) => column);
 
   GeneratedColumn<String> get driveType =>
       $composableBuilder(column: $table.driveType, builder: (column) => column);
@@ -1914,11 +1941,11 @@ class $$CarsTableTableManager extends RootTableManager<
             Value<double> reviewCount = const Value.absent(),
             Value<double> rentalPricePerDay = const Value.absent(),
             Value<bool> isPopular = const Value.absent(),
-            Value<String> description = const Value.absent(),
+            Value<String> localizedDescription = const Value.absent(),
             Value<String> engineType = const Value.absent(),
             Value<int> power = const Value.absent(),
-            Value<String> fuelType = const Value.absent(),
-            Value<String> color = const Value.absent(),
+            Value<String> localizedFuelType = const Value.absent(),
+            Value<String> localizedColor = const Value.absent(),
             Value<String> driveType = const Value.absent(),
           }) =>
               CarsCompanion(
@@ -1929,11 +1956,11 @@ class $$CarsTableTableManager extends RootTableManager<
             reviewCount: reviewCount,
             rentalPricePerDay: rentalPricePerDay,
             isPopular: isPopular,
-            description: description,
+            localizedDescription: localizedDescription,
             engineType: engineType,
             power: power,
-            fuelType: fuelType,
-            color: color,
+            localizedFuelType: localizedFuelType,
+            localizedColor: localizedColor,
             driveType: driveType,
           ),
           createCompanionCallback: ({
@@ -1944,11 +1971,11 @@ class $$CarsTableTableManager extends RootTableManager<
             required double reviewCount,
             required double rentalPricePerDay,
             required bool isPopular,
-            required String description,
+            required String localizedDescription,
             required String engineType,
             required int power,
-            required String fuelType,
-            required String color,
+            required String localizedFuelType,
+            required String localizedColor,
             required String driveType,
           }) =>
               CarsCompanion.insert(
@@ -1959,11 +1986,11 @@ class $$CarsTableTableManager extends RootTableManager<
             reviewCount: reviewCount,
             rentalPricePerDay: rentalPricePerDay,
             isPopular: isPopular,
-            description: description,
+            localizedDescription: localizedDescription,
             engineType: engineType,
             power: power,
-            fuelType: fuelType,
-            color: color,
+            localizedFuelType: localizedFuelType,
+            localizedColor: localizedColor,
             driveType: driveType,
           ),
           withReferenceMapper: (p0) => p0
@@ -1987,12 +2014,12 @@ typedef $$CarsTableProcessedTableManager = ProcessedTableManager<
     PrefetchHooks Function()>;
 typedef $$PromotionsTableCreateCompanionBuilder = PromotionsCompanion Function({
   Value<int> id,
-  required String name,
+  required String localizedName,
   required String photo,
 });
 typedef $$PromotionsTableUpdateCompanionBuilder = PromotionsCompanion Function({
   Value<int> id,
-  Value<String> name,
+  Value<String> localizedName,
   Value<String> photo,
 });
 
@@ -2008,8 +2035,8 @@ class $$PromotionsTableFilterComposer
   ColumnFilters<int> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get name => $composableBuilder(
-      column: $table.name, builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get localizedName => $composableBuilder(
+      column: $table.localizedName, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get photo => $composableBuilder(
       column: $table.photo, builder: (column) => ColumnFilters(column));
@@ -2027,8 +2054,9 @@ class $$PromotionsTableOrderingComposer
   ColumnOrderings<int> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get name => $composableBuilder(
-      column: $table.name, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<String> get localizedName => $composableBuilder(
+      column: $table.localizedName,
+      builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get photo => $composableBuilder(
       column: $table.photo, builder: (column) => ColumnOrderings(column));
@@ -2046,8 +2074,8 @@ class $$PromotionsTableAnnotationComposer
   GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
-  GeneratedColumn<String> get name =>
-      $composableBuilder(column: $table.name, builder: (column) => column);
+  GeneratedColumn<String> get localizedName => $composableBuilder(
+      column: $table.localizedName, builder: (column) => column);
 
   GeneratedColumn<String> get photo =>
       $composableBuilder(column: $table.photo, builder: (column) => column);
@@ -2077,22 +2105,22 @@ class $$PromotionsTableTableManager extends RootTableManager<
               $$PromotionsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
-            Value<String> name = const Value.absent(),
+            Value<String> localizedName = const Value.absent(),
             Value<String> photo = const Value.absent(),
           }) =>
               PromotionsCompanion(
             id: id,
-            name: name,
+            localizedName: localizedName,
             photo: photo,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
-            required String name,
+            required String localizedName,
             required String photo,
           }) =>
               PromotionsCompanion.insert(
             id: id,
-            name: name,
+            localizedName: localizedName,
             photo: photo,
           ),
           withReferenceMapper: (p0) => p0

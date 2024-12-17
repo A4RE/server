@@ -34,7 +34,6 @@ Middleware corsHeaders() {
   };
 }
 
-
 void main() async {
   final router = Router();
 
@@ -239,50 +238,20 @@ void main() async {
 
 
   protectedRouter.get('/cars', (Request request) async {
+    final languageCode = request.headers['accept-language']?.split(',').first ?? 'en';
     try {
-      final cars = await db.getAllCars();
-      final carList = cars.map((car) => {
-        'id': car.id,
-        'photos': jsonDecode(car.photos),
-        'name': car.name,
-        'rating': car.rating,
-        'reviewCount': car.reviewCount,
-        'rentalPricePerDay': car.rentalPricePerDay,
-        'isPopular': car.isPopular,
-        'description': car.description,
-        'engineType': car.engineType,
-        'power': car.power,
-        'fuelType': car.fuelType,
-        'color': car.color,
-        'driveType': car.driveType,
-      }).toList();
-
-      return Response.ok(jsonEncode(carList), headers: {'Content-Type': 'application/json'});
+      final cars = await db.getAllCars(languageCode);
+      return Response.ok(jsonEncode(cars), headers: {'Content-Type': 'application/json'});
     } catch (e) {
       return Response.internalServerError(body: 'Failed to retrieve cars: $e');
     }
   });
 
   protectedRouter.get('/cars/popular', (Request request) async {
+    final languageCode = request.headers['accept-language']?.split(',').first ?? 'en';
     try {
-      final cars = await db.getPopularCars();
-      final popularCarsList = cars.map((car) => {
-        'id': car.id,
-        'photos': jsonDecode(car.photos),
-        'name': car.name,
-        'rating': car.rating,
-        'reviewCount': car.reviewCount,
-        'rentalPricePerDay': car.rentalPricePerDay,
-        'isPopular': car.isPopular,
-        'description': car.description,
-        'engineType': car.engineType,
-        'power': car.power,
-        'fuelType': car.fuelType,
-        'color': car.color,
-        'driveType': car.driveType,
-      }).toList();
-
-      return Response.ok(jsonEncode(popularCarsList), headers: {'Content-Type': 'application/json'});
+      final cars = await db.getPopularCars(languageCode);
+      return Response.ok(jsonEncode(cars), headers: {'Content-Type': 'application/json'});
     } catch (e) {
       return Response.internalServerError(body: 'Failed to retrieve popular cars: $e');
     }
@@ -302,18 +271,19 @@ void main() async {
     double? reviewCount;
     double? rentalPricePerDay;
     bool? isPopular;
-    String? description;
+    String? localizedDescription; // JSON
+    String? localizedFuelType;    // JSON
+    String? localizedColor;       // JSON
+    String? driveType;
     String? engineType;
     int? power;
-    String? fuelType;
-    String? color;
-    String? driveType;
+
     List<String> photoPaths = [];
 
     for (final part in parts) {
       final contentDisposition = part.headers['content-disposition'];
       if (contentDisposition != null && contentDisposition.contains('filename=')) {
-
+        // Сохраняем файл
         final content = await part.toList();
         final fileName = contentDisposition.split('filename=')[1].replaceAll('"', '');
         final fileBytes = content.expand((e) => e).toList();
@@ -324,6 +294,7 @@ void main() async {
 
         photoPaths.add(filePath);
       } else {
+        // Обрабатываем текстовые данные
         final field = utf8.decode(await part.expand((bytes) => bytes).toList());
         if (contentDisposition!.contains('name="name"')) {
           name = field;
@@ -335,54 +306,77 @@ void main() async {
           rentalPricePerDay = double.parse(field);
         } else if (contentDisposition.contains('name="isPopular"')) {
           isPopular = field == 'true';
-        } else if (contentDisposition.contains('name="description"')) {
-          description = field;
-        } else if (contentDisposition.contains('name="engineType"')) {
-          engineType = field;
-        } else if (contentDisposition.contains('name="power"')) {
-          power = int.parse(field);
-        } else if (contentDisposition.contains('name="fuelType"')) {
-          fuelType = field;
-        } else if (contentDisposition.contains('name="color"')) {
-          color = field;
+        } else if (contentDisposition.contains('name="localizedDescription"')) {
+          localizedDescription = field; // Ожидаем JSON
+        } else if (contentDisposition.contains('name="localizedFuelType"')) {
+          localizedFuelType = field; // Ожидаем JSON
+        } else if (contentDisposition.contains('name="localizedColor"')) {
+          localizedColor = field; // Ожидаем JSON
         } else if (contentDisposition.contains('name="driveType"')) {
           driveType = field;
+        } else if (contentDisposition.contains('name="engineType"')) {
+          engineType = field; // Новый параметр
+        } else if (contentDisposition.contains('name="power"')) {
+          power = int.parse(field); // Новый параметр
         }
       }
     }
 
-    if (name == null || rating == null || reviewCount == null || rentalPricePerDay == null || isPopular == null || description == null || engineType == null || power == null || fuelType == null || color == null || driveType == null) {
+    // Проверяем, что обязательные поля переданы
+    if (name == null ||
+        rating == null ||
+        reviewCount == null ||
+        rentalPricePerDay == null ||
+        isPopular == null ||
+        localizedDescription == null ||
+        localizedFuelType == null ||
+        localizedColor == null ||
+        driveType == null || engineType == null || power == null) {
       return Response.badRequest(body: jsonEncode({'error': 'Missing required fields'}));
     }
 
-    await db.addCar(
-      photos: jsonEncode(photoPaths),
-      name: name,
-      rating: rating,
-      reviewCount: reviewCount,
-      rentalPricePerDay: rentalPricePerDay,
-      isPopular: isPopular,
-      description: description,
-      engineType: engineType,
-      power: power,
-      fuelType: fuelType,
-      color: color,
-      driveType: driveType,
-    );
+    try {
+      // Преобразуем JSON данные в Map<String, String>
+      final Map<String, String> descriptions =
+          (jsonDecode(localizedDescription) as Map<String, dynamic>)
+              .map((key, value) => MapEntry(key, value.toString()));
 
-    return Response.ok(jsonEncode({'message': 'Car added successfully'}));
+      final Map<String, String> fuelTypes =
+          (jsonDecode(localizedFuelType) as Map<String, dynamic>)
+              .map((key, value) => MapEntry(key, value.toString()));
+
+      final Map<String, String> colors =
+          (jsonDecode(localizedColor) as Map<String, dynamic>)
+              .map((key, value) => MapEntry(key, value.toString()));
+
+      // Добавляем машину в базу данных
+      await db.addCar(
+        photos: jsonEncode(photoPaths), // Сериализуем список в JSON
+        name: name,
+        rating: rating,
+        reviewCount: reviewCount,
+        rentalPricePerDay: rentalPricePerDay,
+        isPopular: isPopular,
+        localizedDescriptions: descriptions,
+        localizedFuelTypes: fuelTypes,
+        localizedColors: colors,
+        driveType: driveType,
+        engineType: engineType, // Новый параметр
+        power: power, 
+      );
+
+      return Response.ok(jsonEncode({'message': 'Car added successfully'}));
+    } catch (e) {
+      return Response.internalServerError(
+          body: jsonEncode({'error': 'Failed to add car', 'details': e.toString()}));
+    }
   });
 
   protectedRouter.get('/promotions', (Request request) async {
+    final languageCode = request.headers['accept-language']?.split(',').first ?? 'en';
     try {
-      final promotions = await db.getAllPromotions();
-      final promotionsList = promotions.map((promo) => {
-        'id': promo.id,
-        'name': promo.name,
-        'photo': promo.photo,
-      }).toList();
-
-      return Response.ok(jsonEncode(promotionsList), headers: {'Content-Type': 'application/json'});
+      final promotions = await db.getAllPromotions(languageCode);
+      return Response.ok(jsonEncode(promotions), headers: {'Content-Type': 'application/json'});
     } catch (e) {
       return Response.internalServerError(body: 'Failed to retrieve promotions: $e');
     }
@@ -397,40 +391,59 @@ void main() async {
     final transformer = MimeMultipartTransformer(boundary);
     final parts = await transformer.bind(request.read()).toList();
 
-    String? name;
+    String? localizedName; // JSON
     String? photoPath;
 
     for (final part in parts) {
       final contentDisposition = part.headers['content-disposition'];
       if (contentDisposition != null && contentDisposition.contains('filename=')) {
-        final content = await part.toList();
-        final fileName = contentDisposition.split('filename=')[1].replaceAll('"', '');
-        final fileBytes = content.expand((e) => e).toList();
+        try {
+          final content = await part.toList();
+          final fileName = contentDisposition.split('filename=')[1].replaceAll('"', '');
+          final fileBytes = content.expand((e) => e).toList();
 
-        final filePath = 'uploads/$fileName';
-        final file = File(filePath);
-        await file.writeAsBytes(fileBytes);
+          final filePath = 'uploads/$fileName';
+          final file = File(filePath);
+          await file.writeAsBytes(fileBytes);
 
-        photoPath = filePath;
+          photoPath = filePath; // Путь к загруженному файлу
+        } catch (e) {
+          return Response.internalServerError(
+              body: jsonEncode({'error': 'Failed to upload file', 'details': e.toString()}));
+        }
       } else {
         final field = utf8.decode(await part.expand((bytes) => bytes).toList());
-        if (contentDisposition!.contains('name="name"')) {
-          name = field;
+        if (contentDisposition!.contains('name="localizedName"')) {
+          localizedName = field; // JSON строка
         }
       }
     }
 
-    if (name == null || photoPath == null) {
+    // Проверяем, что обязательные поля заполнены
+    if (localizedName == null || photoPath == null) {
       return Response.badRequest(body: jsonEncode({'error': 'Missing required fields'}));
     }
 
-    await db.addPromotion(
-      name: name,
-      photo: photoPath,
-    );
+    try {
+      // Преобразуем JSON в Map<String, String>
+      final Map<String, String> localizedNames =
+          (jsonDecode(localizedName) as Map<String, dynamic>)
+              .map((key, value) => MapEntry(key, value.toString()));
 
-    return Response.ok(jsonEncode({'message': 'Promotion added successfully'}));
+      // Добавляем промоакцию в базу
+      await db.addPromotion(
+        localizedNames: localizedNames,
+        photo: photoPath,
+      );
+
+      return Response.ok(jsonEncode({'message': 'Promotion added successfully'}));
+    } catch (e) {
+      return Response.internalServerError(
+          body: jsonEncode({'error': 'Failed to add promotion', 'details': e.toString()}));
+    }
   });
+
+
 
   Middleware sessionChecker() {
     return (Handler handler) {

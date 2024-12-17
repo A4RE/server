@@ -28,7 +28,7 @@ class Users extends Table {
 @DataClassName('Promotion')
 class Promotions extends Table {
   IntColumn get id => integer().autoIncrement()();
-  TextColumn get name => text()();
+  TextColumn get localizedName => text()();
   TextColumn get photo => text()();
 }
 
@@ -41,13 +41,27 @@ class Cars extends Table {
   RealColumn get reviewCount => real()();
   RealColumn get rentalPricePerDay => real()();
   BoolColumn get isPopular => boolean()();
-  TextColumn get description => text()();
+  TextColumn get localizedDescription => text()();
   TextColumn get engineType => text()();
   IntColumn get power => integer()();
-  TextColumn get fuelType => text()();
-  TextColumn get color => text()();
+  TextColumn get localizedFuelType => text()();
+  TextColumn get localizedColor => text()();
   TextColumn get driveType => text()();
 }
+
+String extractLocalizedText(String localizedTextJson, String languageCode) {
+  if (localizedTextJson.isEmpty) {
+    return 'Translation missing';
+  }
+
+  try {
+    final Map<String, dynamic> translations = jsonDecode(localizedTextJson);
+    return translations[languageCode] ?? translations['en'] ?? 'Translation missing';
+  } catch (e) {
+    return 'Translation missing';
+  }
+}
+
 
 @DriftDatabase(tables: [Users, Cars, Promotions, Sessions])
 class AppDatabase extends _$AppDatabase {
@@ -117,12 +131,46 @@ class AppDatabase extends _$AppDatabase {
   }
 
 
-  Future<List<Car>> getAllCars() async {
-    return select(cars).get();
+  Future<List<Map<String, dynamic>>> getAllCars(String languageCode) async {
+    final carList = await select(cars).get();
+    return carList.map((car) {
+      return {
+        'id': car.id,
+        'photos': jsonDecode(car.photos),
+        'name': car.name,
+        'rating': car.rating,
+        'reviewCount': car.reviewCount,
+        'rentalPricePerDay': car.rentalPricePerDay,
+        'isPopular': car.isPopular,
+        'description': extractLocalizedText(car.localizedDescription, languageCode),
+        'engineType': car.engineType,
+        'power': car.power,
+        'fuelType': extractLocalizedText(car.localizedFuelType, languageCode),
+        'color': extractLocalizedText(car.localizedColor, languageCode),
+        'driveType': car.driveType,
+      };
+    }).toList();
   }
 
-  Future<List<Car>> getPopularCars() async {
-    return (select(cars)..where((tbl) => tbl.isPopular.equals(true))).get();
+  Future<List<Map<String, dynamic>>> getPopularCars(String languageCode) async {
+    final popularCars = await (select(cars)..where((tbl) => tbl.isPopular.equals(true))).get();
+    return popularCars.map((car) {
+      return {
+        'id': car.id,
+        'photos': jsonDecode(car.photos),
+        'name': car.name,
+        'rating': car.rating,
+        'reviewCount': car.reviewCount,
+        'rentalPricePerDay': car.rentalPricePerDay,
+        'isPopular': car.isPopular,
+        'description': extractLocalizedText(car.localizedDescription, languageCode),
+        'engineType': car.engineType,
+        'power': car.power,
+        'fuelType': extractLocalizedText(car.localizedFuelType, languageCode),
+        'color': extractLocalizedText(car.localizedColor, languageCode),
+        'driveType': car.driveType,
+      };
+    }).toList();
   }
 
   Future<int> addCar({
@@ -132,11 +180,11 @@ class AppDatabase extends _$AppDatabase {
     required double reviewCount,
     required double rentalPricePerDay,
     required bool isPopular,
-    required String description,
+    required Map<String, String> localizedDescriptions,
+    required Map<String, String> localizedFuelTypes,
+    required Map<String, String> localizedColors,
     required String engineType,
     required int power,
-    required String fuelType,
-    required String color,
     required String driveType,
   }) async {
     final car = CarsCompanion(
@@ -146,30 +194,40 @@ class AppDatabase extends _$AppDatabase {
       reviewCount: Value(reviewCount),
       rentalPricePerDay: Value(rentalPricePerDay),
       isPopular: Value(isPopular),
-      description: Value(description),
+      localizedDescription: Value(jsonEncode(localizedDescriptions)),
+      localizedFuelType: Value(jsonEncode(localizedFuelTypes)),
+      localizedColor: Value(jsonEncode(localizedColors)),
       engineType: Value(engineType),
       power: Value(power),
-      fuelType: Value(fuelType),
-      color: Value(color),
       driveType: Value(driveType),
     );
     return into(cars).insert(car);
   }
 
-  Future<List<Promotion>> getAllPromotions() async {
-    return select(promotions).get();
+
+  Future<List<Map<String, dynamic>>> getAllPromotions(String languageCode) async {
+    final promotionList = await select(promotions).get();
+    return promotionList.map((promo) {
+      return {
+        'id': promo.id,
+        'name': extractLocalizedText(promo.localizedName, languageCode),
+        'photo': promo.photo,
+      };
+    }).toList();
   }
 
+
   Future<int> addPromotion({
-    required String name,
+    required Map<String, String> localizedNames,
     required String photo,
   }) async {
     final promotion = PromotionsCompanion(
-      name: Value(name),
+      localizedName: Value(jsonEncode(localizedNames)),
       photo: Value(photo),
     );
     return into(promotions).insert(promotion);
   }
+
 
   Future<Session?> createSession(int userId) async {
     final sessionId = _generateSessionId(userId);
